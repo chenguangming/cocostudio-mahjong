@@ -7,9 +7,7 @@ $(call import-add-path,$(LOCAL_PATH)/../../../cocos2d/external)
 $(call import-add-path,$(LOCAL_PATH)/../../../cocos2d/cocos)
 $(call import-add-path,$(LOCAL_PATH)/../../../cocos2d/cocos/audio/include)
 
-LOCAL_MODULE := MyGame_shared
-
-LOCAL_MODULE_FILENAME := libMyGame
+LOCAL_MODULE := MyGame
 
 include $(LOCAL_PATH)/Sources.mk
 include $(LOCAL_PATH)/Includes.mk

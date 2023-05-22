@@ -6,36 +6,31 @@ android {
         abortOnError false
     }
     signingConfigs {
-        debug {
-            storeFile file(RELEASE_STORE_FILE)
-            storePassword RELEASE_STORE_PASSWORD
-            keyAlias RELEASE_KEY_ALIAS
-            keyPassword RELEASE_KEY_PASSWORD
-            v2SigningEnabled false
-        }
         release {
-            storeFile file(RELEASE_STORE_FILE)
-            storePassword RELEASE_STORE_PASSWORD
-            keyAlias RELEASE_KEY_ALIAS
-            keyPassword RELEASE_KEY_PASSWORD
-            v2SigningEnabled false
+            keyAlias 'coder'
+            keyPassword 'coder123'
+            storeFile file('coder.jks')
+            storePassword 'coder123'
         }
     }
 
-    compileSdkVersion 26
-    buildToolsVersion '26.0.3'
+    namespace 'com.xiyoufang.mahjong'
+    compileSdk 33
+
     defaultConfig {
         applicationId "com.xiyoufang.mahjong"
-        minSdkVersion 19
-        targetSdkVersion 26
+        minSdk 28
+        targetSdk 33
         versionCode 1
-        versionName "1.0.0"
+        versionName "1.0"
         multiDexEnabled true
         proguardFiles "proguard-rules.pro"
-        ndk { abiFilters 'armeabi-v7a' }
+        //noinspection ChromeOsAbiSupport
+        ndk {
+            abiFilters 'armeabi-v7a'
+        }
         externalNativeBuild {
             ndkBuild {
-                targets 'MyGame'
                 arguments 'NDK_TOOLCHAIN_VERSION=clang'
                 arguments '-j' + Runtime.runtime.availableProcessors()
             }
@@ -75,7 +70,7 @@ android {
         debug {
             debuggable true
             minifyEnabled false
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
             externalNativeBuild {
                 ndkBuild {
                     arguments 'NDK_DEBUG=1'
@@ -84,6 +79,12 @@ android {
         }
     }
 }
+
+task wrapper(type: Wrapper){
+    gradleVersion = '8.0'
+}
+
+task prepareKotlinBuildScriptModel {}
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
