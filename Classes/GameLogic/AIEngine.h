@@ -8,6 +8,9 @@
 #include "GameEngine.h"
 #include "cocos2d.h"
 
+const int WEIGHT[3] = {10, 2, 1}; // 根据其他牌和本牌的距离标定每张牌的价值
+const int SHOU_PAI_SCALE = 50; // 手里的牌将权值放大，毕竟手里的牌和外面还未出现的牌价值有所不同
+
 class AIEngine : public IGameEngineEventListener {
 
 private:
@@ -45,8 +48,8 @@ protected:
     void discardCard();
     void dumpMyCards() const;
     void dumpDiscardCards() const;
-    int calc_shoupai_qz();
-    static int calc_card_gap(u_int8_t a, u_int8_t b);
+    int suggestDiscard();
+    static int calcCardGap(u_int8_t a, u_int8_t b);
 
     void markCardShow(uint8_t idx, u_int8_t cnt);
 

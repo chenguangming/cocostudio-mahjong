@@ -229,15 +229,12 @@ bool AIEngine::onGameEndEvent(CMD_S_GameEnd& GameEnd) {
     return true;
 }
 
-const int MAX_M = 14; // 手牌的最大数量
-int para[3] = {10, 2, 1};
-int scale = 50;
-
-int AIEngine::calc_card_gap(u_int8_t a, u_int8_t b) {
+// 计算两张牌的距离
+int AIEngine::calcCardGap(u_int8_t a, u_int8_t b) {
     // 同种牌型
     if ((a & 0xF0) == (b & 0xF0)) {
+        // 字牌，只有成对的可能性
         if ((a & 0xF0) == 0x30) {
-            // 字牌，只有成对的可能性
             if (a == b) {
                 return 0;
             } else {
@@ -252,28 +249,29 @@ int AIEngine::calc_card_gap(u_int8_t a, u_int8_t b) {
     return 4;
 }
 
-// 计算手牌的权值
-int AIEngine::calc_shoupai_qz() {
-    int shoupai[MAX_M]; // 手牌的数组
+// 根据手牌的权值推荐出牌
+int AIEngine::suggestDiscard() {
+    int shoupai[MAX_COUNT]; // 手牌的数组
     int shoupai_cnt = 0;
     int min_score = INT32_MAX, bad_card = 0;
 
-    memset(shoupai, -1, MAX_M);
+    memset(shoupai, -1, MAX_COUNT);
     // 清点手中的牌，构成连续数组
     for (int i=0; i<MAX_INDEX; i++) {
         int num = m_cbCardIndex[m_MeChairID][i];
         for (int j=0; j<num; j++) {
-            shoupai[shoupai_cnt++] = i;
+            shoupai[shoupai_cnt++] = GameLogic::switchToCardData(i);
         }
     }
 
     for (int c=0; c<shoupai_cnt;c++) {
         int score = 0;
+        int card = shoupai[c];
 
         for (int cc=0; cc<shoupai_cnt; cc++) {
-            int gap = calc_card_gap(GameLogic::switchToCardData(shoupai[cc]), GameLogic::switchToCardData(shoupai[c]));
+            int gap = calcCardGap(shoupai[cc], card);
             if (gap < 3) {
-                score += para[gap] * scale;
+                score += WEIGHT[gap] * SHOU_PAI_SCALE;
             }
         }
 
@@ -282,11 +280,11 @@ int AIEngine::calc_shoupai_qz() {
                 continue;
             }
 
-            int idx = it - m_darkCards.cbegin();
+            int dark_card = GameLogic::switchToCardData(it - m_darkCards.cbegin());
             for (int j=0; j<*it; j++) {
-                int gap = calc_card_gap(GameLogic::switchToCardData(idx), GameLogic::switchToCardData(shoupai[c]));
+                int gap = calcCardGap(dark_card, card);
                 if (gap < 3) {
-                    score += para[gap];
+                    score += WEIGHT[gap];
                 }
             }
         }
@@ -296,9 +294,9 @@ int AIEngine::calc_shoupai_qz() {
             bad_card = c;
         }
 
-        cocos2d::log("机器%d 牌 %s 权值: %d", m_MeChairID, GameLogic::getCardNameByIndex(shoupai[c]), score);
+        cocos2d::log("机器%d 牌 %s 权值: %d", m_MeChairID, GameLogic::getCardName(shoupai[c]), score);
     }
-    cocos2d::log("机器%d 应打出 %s(%d), 权值: %d", m_MeChairID, GameLogic::getCardNameByIndex(shoupai[bad_card]), shoupai[bad_card], min_score);
+    cocos2d::log("机器%d 应打出 %s(%d), 权值: %d", m_MeChairID, GameLogic::getCardName(shoupai[bad_card]), shoupai[bad_card], min_score);
 
     return shoupai[bad_card];
 }
@@ -311,7 +309,7 @@ int AIEngine::calc_shoupai_qz() {
 void AIEngine::discardCard() {
     CMD_C_OutCard OutCard;
     memset(&OutCard, 0, sizeof(CMD_C_OutCard));
-    OutCard.cbCardData = GameLogic::switchToCardData(calc_shoupai_qz());
+    OutCard.cbCardData = suggestDiscard();
 
     m_GameEngine->onUserOutCard(OutCard);
     dumpDiscardCards();
