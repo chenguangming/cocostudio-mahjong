@@ -13,7 +13,6 @@ class AIEngine : public IGameEngineEventListener {
 private:
     GameEngine *m_GameEngine;       //游戏引擎
     IPlayer *m_MePlayer;            //AI玩家
-    uint8_t m_cbSendCardData;       //发送的牌
 
 private:
     tagWeaveItem m_WeaveItemArray[GAME_PLAYER][MAX_WEAVE];                 //组合
@@ -22,6 +21,7 @@ private:
     uint8_t m_cbDiscardCount[GAME_PLAYER];                                 //丢弃数目
     uint8_t m_cbDiscardCard[GAME_PLAYER][MAX_DISCARD];                     //丢弃记录
     uint8_t m_cbLeftCardCount;                                             //剩余
+    std::vector<uint8_t> m_darkCards; // 站在自己的角度所有未出现的牌
     uint8_t m_cbBankerChair;                                               //庄
     uint8_t m_MeChairID;                                                   //自己的位置
 
@@ -42,7 +42,13 @@ public:
 
 protected:
     //操作
-    void sendCard();
+    void discardCard();
+    void dumpMyCards() const;
+    void dumpDiscardCards() const;
+    int calc_shoupai_qz();
+    static int calc_card_gap(u_int8_t a, u_int8_t b);
+
+    void markCardShow(uint8_t idx, u_int8_t cnt);
 
 };
 

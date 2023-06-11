@@ -111,6 +111,8 @@ public:
     //等级函数
     static uint8_t getUserActionRank(uint8_t wUserAction); //动作等级
     static uint8_t getHuFanShu(const uint64_t huRight, const uint8_t huKind, const uint8_t huSpecial); //胡牌分数
+    static const char* getCardName(const uint8_t cbCardData); //牌名
+    static const char* getCardNameByIndex(const uint8_t index);
 public:
     //分析函数
     static uint8_t analyseGangCard(const uint8_t cbCardIndex[MAX_INDEX], tagWeaveItem WeaveItem[], uint8_t cbWeaveCount, tagGangCardResult &GangCardResult); //杠牌分析

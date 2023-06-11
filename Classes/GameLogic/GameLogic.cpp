@@ -25,6 +25,21 @@ static const uint8_t s_MJCardDataArray[MAX_REPERTORY] = {
         0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,                                    //番子
 };
 
+static const char* s_MJCardNameArray[MAX_INDEX] = {
+        "一筒", "二筒", "三筒", "四筒", "五筒", "六筒", "七筒", "八筒", "九筒",               //筒子
+        "一万", "二万", "三万", "四万", "五万", "六万", "七万", "八万", "九万",         //万子
+        "一条", "二条", "三条", "四条", "五条", "六条", "七条", "八条", "九条",        //条子
+        "东风", "南风", "西风", "北风", "红中", "发财", "白板",                               //番子
+};
+
+const char* GameLogic::getCardName(const uint8_t cbCardData) {
+    return s_MJCardNameArray[GameLogic::switchToCardIndex(cbCardData)];
+}
+
+const char* GameLogic::getCardNameByIndex(const uint8_t index) {
+    return s_MJCardNameArray[index];
+}
+
 /**
  * 洗牌
  * @param cbCardData
@@ -690,7 +705,7 @@ bool GameLogic::canHu(const uint8_t cbCardIndexTemp[MAX_INDEX], const uint8_t cb
 
 
 /**
- * 平湖判定
+ * 平胡判定
  * @param cbCardIndexTemp
  * @param cbCardCountTemp
  * @param cbCardIndex
