@@ -54,6 +54,7 @@ bool AIEngine::onGameStartEvent(CMD_S_GameStart GameStart) {
     for (int i=0; i<MAX_INDEX; i++) {
         uint8_t num = m_cbCardIndex[m_MeChairID][i];
         if (num > 0) {
+            // 自己的牌，全部标记已见
             markCardShow(i, num);
         }
     }
@@ -62,8 +63,8 @@ bool AIEngine::onGameStartEvent(CMD_S_GameStart GameStart) {
 }
 
 void AIEngine::markCardShow(uint8_t idx, u_int8_t cnt) {
-    cocos2d::log("机器人%d 标记 %d 张 %s 已见", m_MeChairID, cnt, GameLogic::getCardNameByIndex(idx));
     m_darkCards[idx] -= cnt;
+    cocos2d::log("机器人%d 标记 %d 张 %s 已见, 剩余%d张", m_MeChairID, cnt, GameLogic::getCardNameByIndex(idx), m_darkCards[idx]);
 }
 
 void AIEngine::dumpMyCards() const {
@@ -126,6 +127,7 @@ bool AIEngine::onOutCardEvent(CMD_S_OutCard OutCard) {
 
         m_cbCardIndex[m_MeChairID][GameLogic::switchToCardIndex(OutCard.cbOutCardData)]--;
     } else {
+        // 对手出牌，标记可见
         markCardShow(GameLogic::switchToCardIndex(OutCard.cbOutCardData), 1);
     }
     m_cbDiscardCard[OutCard.cbOutCardUser][m_cbDiscardCount[OutCard.cbOutCardUser]++] = OutCard.cbOutCardData;
@@ -182,6 +184,9 @@ bool AIEngine::onOperateResultEvent(CMD_S_OperateResult OperateResult) {
                 uint8_t cbReomveCard[] = {OperateResult.cbOperateCard, OperateResult.cbOperateCard};
                 GameLogic::removeCard(m_cbCardIndex[OperateResult.cbOperateUser], cbReomveCard, sizeof(cbReomveCard));
                 DelayCall::add([this]() { discardCard(); }, time(NULL) % 2 + 0.5f);
+            } else {
+                // 对手碰牌，有2张新牌（碰牌的一对）标记可见; 自己碰时，三张牌肯定都是之前标记过的（自己摸牌或者对手打牌时），无需重新标记
+                markCardShow(GameLogic::switchToCardIndex(OperateResult.cbOperateCard), 2);
             }
             break;
         }
@@ -207,6 +212,9 @@ bool AIEngine::onOperateResultEvent(CMD_S_OperateResult OperateResult) {
             }
             if (OperateResult.cbOperateUser == m_MeChairID) {  //自己
                 GameLogic::removeAllCard(m_cbCardIndex[OperateResult.cbOperateUser], OperateResult.cbOperateCard);
+            } else {
+                // 对手杠牌，有3张新牌标记可见; 自己杠时，所有牌肯定都是之前标记过的（自己摸牌或者对手打牌时）
+                markCardShow(GameLogic::switchToCardIndex(OperateResult.cbOperateCard), 3);
             }
             break;
         }
@@ -264,10 +272,11 @@ int AIEngine::suggestDiscard() {
         }
     }
 
-    for (int c=0; c<shoupai_cnt;c++) {
+    for (int c=0; c<shoupai_cnt; c++) {
         int score = 0;
         int card = shoupai[c];
 
+        // 遍历自己手里的牌，计算每张牌的价值（彼此越靠近的牌，相互价值就大）
         for (int cc=0; cc<shoupai_cnt; cc++) {
             int gap = calcCardGap(shoupai[cc], card);
             if (gap < 3) {
@@ -275,6 +284,7 @@ int AIEngine::suggestDiscard() {
             }
         }
 
+        // 遍历所有未见过的牌，计算这些牌与手里牌匹配的可能性
         for (auto it = m_darkCards.cbegin(); it != m_darkCards.end(); ++it) {
             if (*it <= 0) {
                 continue;
@@ -294,9 +304,9 @@ int AIEngine::suggestDiscard() {
             bad_card = c;
         }
 
-        cocos2d::log("机器%d 牌 %s 权值: %d", m_MeChairID, GameLogic::getCardName(shoupai[c]), score);
+        cocos2d::log("机器人%d 牌 %s 权值: %d", m_MeChairID, GameLogic::getCardName(shoupai[c]), score);
     }
-    cocos2d::log("机器%d 应打出 %s(%d), 权值: %d", m_MeChairID, GameLogic::getCardName(shoupai[bad_card]), shoupai[bad_card], min_score);
+    cocos2d::log("机器人%d 建议打出 %s(%d), 权值: %d", m_MeChairID, GameLogic::getCardName(shoupai[bad_card]), shoupai[bad_card], min_score);
 
     return shoupai[bad_card];
 }
